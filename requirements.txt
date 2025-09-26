@@ -1,5 +1,3 @@
 pyTelegramBotAPI
-yfinance
-pandas
-numpy
-APScheduler
+Flask
+gunicorn
