@@ -1,39 +1,99 @@
 import os
 import telebot
 from flask import Flask, request
+import openai
+import yfinance as yf
+import schedule
+import time
+import threading
+from datetime import datetime
 
-# التوكن من Environment Variables
 TOKEN = os.environ.get("BOT_TOKEN")
-if not TOKEN:
-    raise ValueError("❌ BOT_TOKEN مش موجود في Environment Variables")
+OPENAI_KEY = os.environ.get("OPENAI_API_KEY")
 
 bot = telebot.TeleBot(TOKEN)
+openai.api_key = OPENAI_KEY
 app = Flask(__name__)
 
-# Webhook endpoint
+# قواعد بيانات مؤقتة
+open_trades = {}
+closed_trades = []
+
+# Webhook
 @app.route("/" + TOKEN, methods=["POST"])
 def getMessage():
     json_str = request.get_data().decode("UTF-8")
     update = telebot.types.Update.de_json(json_str)
     bot.process_new_updates([update])
-    return "OK", 200
+    return "!", 200
 
-# Route لفحص السيرفر
 @app.route("/")
-def index():
+def webhook():
     return "✅ البوت شغال", 200
 
-# أمر /start
-@bot.message_handler(commands=["start"])
-def send_welcome(message):
-    bot.reply_to(message, "👋 أهلًا! البوت شغال 100%.")
+# ---- الدوال ----
+def get_price(symbol):
+    try:
+        data = yf.Ticker(symbol)
+        price = data.history(period="1d")["Close"].iloc[-1]
+        return round(price, 2)
+    except Exception:
+        return None
 
-# أي رسالة
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.reply_to(message, f"وصلتني رسالتك: {message.text}")
+def ask_ai(prompt):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "أنت خبير فوركس بأسلوب ICT/SMC."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"⚠️ خطأ: {str(e)}"
 
-# تشغيل
+def generate_weekly_report():
+    if not closed_trades:
+        return "📭 لا توجد نتائج بعد."
+    
+    wins = [t for t in closed_trades if t["result"] > 0]
+    losses = [t for t in closed_trades if t["result"] <= 0]
+    total_pips = sum([t["result"] for t in closed_trades])
+
+    text = "📅 ملخص الأسبوع:\n\n"
+    text += f"✅ رابحة: {len(wins)}\n"
+    text += f"❌ خاسرة: {len(losses)}\n"
+    text += f"📈 مجموع البيبس: {total_pips}\n\n"
+    for t in closed_trades:
+        text += f"{t['symbol']} → {t['result']} pips\n"
+    return text
+
+# ---- أوامر ----
+@bot.message_handler(commands=["weekly"])
+def weekly(message):
+    bot.reply_to(message, generate_weekly_report())
+
+# ---- جدولة التقرير الأسبوعي ----
+CHAT_ID = os.environ.get("CHAT_ID")  # حط هنا ID القناة أو المجموعة
+
+def job():
+    report = generate_weekly_report()
+    if CHAT_ID:
+        bot.send_message(CHAT_ID, report)
+
+def run_scheduler():
+    # كل جمعة الساعة 23:59
+    schedule.every().friday.at("23:59").do(job)
+    while True:
+        schedule.run_pending()
+        time.sleep(30)
+
+# تشغيل الجدولة في Thread منفصل
+t = threading.Thread(target=run_scheduler)
+t.start()
+
+# ---- تشغيل السيرفر ----
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     bot.remove_webhook()
