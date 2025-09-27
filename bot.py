@@ -4,8 +4,8 @@ from flask import Flask, request
 import openai
 
 # Telegram Token من Render Secrets
-TOKEN = os.environ.get("BOT_TOKEN")
-bot = telebot.TeleBot(8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg)
+TOKEN = os.environ.get("8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg")
+bot = telebot.TeleBot(TOKEN)
 
 # OpenAI Key من Render Secrets
 openai.api_key = os.environ.get("OPENAI_API_KEY")
