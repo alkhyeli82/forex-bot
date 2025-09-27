@@ -3,13 +3,11 @@ import telebot
 from flask import Flask, request
 import openai
 
-# 🟢 نسحب التوكن من Secrets في Render (لا تحطه مباشر في الكود)
-TOKEN = os.environ.get("BOT_TOKEN")
+# يسحب التوكنات من Environment Variables
+TOKEN = os.environ.get("8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg")  
+openai.api_key = os.environ.get("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")
+
 bot = telebot.TeleBot(TOKEN)
-
-# 🟢 مفتاح OpenAI من Secrets
-openai.api_key = os.environ.get("OPENAI_API_KEY")
-
 app = Flask(__name__)
 
 # Webhook endpoint
@@ -23,20 +21,20 @@ def getMessage():
 # Route لفحص البوت
 @app.route("/")
 def webhook():
-    return "البوت شغال ✅", 200
+    return "✅ البوت شغال", 200
 
 # أمر /start
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
-    bot.reply_to(message, "👋 أهلاً! ارسل اسم العملة (Bitcoin أو EURUSD) وأنا أجيبك بتحليل من Noro AI.")
+    bot.reply_to(message, "👋 أهلًا! ارسل اسم العملة أو السلعة (مثال: EURUSD, Bitcoin, Gold) لتحصل على تحليل.")
 
-# دالة لطلب تحليل من GPT
+# دالة استدعاء GPT (Noro AI style)
 def ask_noro_ai(prompt):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "انت خبير تحليل فني بأسلوب ICT و SMC."},
+                {"role": "system", "content": "أنت خبير تحليل فني بأسلوب ICT و SMC."},
                 {"role": "user", "content": prompt}
             ]
         )
@@ -44,7 +42,7 @@ def ask_noro_ai(prompt):
     except Exception as e:
         return f"⚠️ خطأ بالاتصال مع Noro AI: {str(e)}"
 
-# أي رسالة يرسلها المستخدم
+# استقبال أي رسالة من المستخدم
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     user_text = message.text
@@ -55,5 +53,6 @@ def echo_all(message):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     bot.remove_webhook()
-    bot.set_webhook(url="https://forex-bot-3ims.onrender.com/" + TOKEN)
+    bot.set_webhook(url="bot.set_webhook(url="https://forex-bot-31ws.onrender.com/" + TOKEN)
+" + TOKEN)
     app.run(host="0.0.0.0", port=port)
