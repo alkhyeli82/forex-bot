@@ -3,3 +3,4 @@ Flask
 gunicorn
 yfinance
 pandas
+openai
