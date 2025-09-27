@@ -1,7 +1,7 @@
 import telebot
 from flask import Flask, request
 
-TOKEN = "ضع_التوكن_الجديد_هنا"
+TOKEN = "8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg"
 bot = telebot.TeleBot(TOKEN)
 
 # عرّف Flask app
