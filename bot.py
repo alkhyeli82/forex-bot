@@ -3,9 +3,9 @@ import telebot
 from flask import Flask, request
 import openai
 
-# جلب التوكنات من Render Environment Variables
-TOKEN = os.environ.get("8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg")  
-openai.api_key = os.environ.get("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")
+# جلب التوكنات من Environment Variables في Render
+TOKEN = os.environ.get("BOT_TOKEN")
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # تأكيد أن التوكنات موجودة
 if not TOKEN:
@@ -13,10 +13,11 @@ if not TOKEN:
 if not openai.api_key:
     raise ValueError("❌ OPENAI_API_KEY غير موجود في Environment Variables")
 
+# تهيئة البوت والتطبيق
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# Webhook endpoint
+# Webhook endpoint (معالجة رسائل تيليجرام)
 @app.route("/" + TOKEN, methods=["POST"])
 def getMessage():
     json_str = request.get_data().decode("UTF-8")
@@ -24,10 +25,10 @@ def getMessage():
     bot.process_new_updates([update])
     return "!", 200
 
-# Route لفحص البوت
+# Route لفحص البوت من المتصفح
 @app.route("/")
 def webhook():
-    return "✅ البوت شغال", 200
+    return "✅ البوت شغال 100%", 200
 
 # أمر /start
 @bot.message_handler(commands=["start"])
@@ -58,7 +59,7 @@ def echo_all(message):
     analysis = ask_noro_ai(user_text)
     bot.reply_to(message, analysis)
 
-# تشغيل
+# تشغيل التطبيق
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     bot.remove_webhook()
