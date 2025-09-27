@@ -3,7 +3,7 @@ import telebot
 from flask import Flask, request
 import openai
 
-# جلب التوكنات من Environment Variables في Render
+# جلب التوكنات من Environment Variables
 TOKEN = os.environ.get("BOT_TOKEN")
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -13,11 +13,10 @@ if not TOKEN:
 if not openai.api_key:
     raise ValueError("❌ OPENAI_API_KEY غير موجود في Environment Variables")
 
-# تهيئة البوت والتطبيق
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-# Webhook endpoint (معالجة رسائل تيليجرام)
+# Webhook endpoint
 @app.route("/" + TOKEN, methods=["POST"])
 def getMessage():
     json_str = request.get_data().decode("UTF-8")
@@ -25,18 +24,51 @@ def getMessage():
     bot.process_new_updates([update])
     return "!", 200
 
-# Route لفحص البوت من المتصفح
+# Route لفحص البوت
 @app.route("/")
 def webhook():
-    return "✅ البوت شغال 100%", 200
+    return "✅ البوت شغال", 200
 
-# أمر /start
+# أمر /start مع كيبورد رئيسي
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.row("Gold", "Bitcoin")
+    keyboard.row("EURUSD", "GBPUSD", "USDJPY")
     bot.reply_to(
         message,
-        "👋 أهلًا! اكتب اسم العملة أو السلعة (مثال: EURUSD, Bitcoin, Gold) للحصول على تحليل."
+        "👋 أهلًا! اختر من الأزرار أو اكتب اسم العملة/السلعة لتحصل على تحليل.\n"
+        "اكتب /help لمعرفة المزيد.",
+        reply_markup=keyboard
     )
+
+# أمر /help
+@bot.message_handler(commands=["help"])
+def send_help(message):
+    bot.reply_to(
+        message,
+        "ℹ️ الأوامر المتاحة:\n"
+        "- /start ➝ لعرض لوحة الأزرار.\n"
+        "- /forex ➝ أشهر أزواج الفوركس.\n"
+        "- /crypto ➝ أشهر العملات الرقمية.\n"
+        "- أو اكتب اسم أي عملة/سلعة مباشرة (مثال: Gold, Bitcoin, EURUSD)."
+    )
+
+# أمر /forex
+@bot.message_handler(commands=["forex"])
+def send_forex(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.row("EURUSD", "GBPUSD")
+    keyboard.row("USDJPY", "AUDUSD")
+    bot.reply_to(message, "📊 اختر زوج الفوركس:", reply_markup=keyboard)
+
+# أمر /crypto
+@bot.message_handler(commands=["crypto"])
+def send_crypto(message):
+    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.row("Bitcoin", "Ethereum")
+    keyboard.row("Solana", "XRP")
+    bot.reply_to(message, "💰 اختر العملة الرقمية:", reply_markup=keyboard)
 
 # دالة استدعاء GPT (Noro AI style)
 def ask_noro_ai(prompt):
@@ -59,9 +91,9 @@ def echo_all(message):
     analysis = ask_noro_ai(user_text)
     bot.reply_to(message, analysis)
 
-# تشغيل التطبيق
+# تشغيل
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5000))  # ✅ Render يمرر البورت هنا
     bot.remove_webhook()
     bot.set_webhook(url="https://forex-bot-31ws.onrender.com/" + TOKEN)
     app.run(host="0.0.0.0", port=port)
