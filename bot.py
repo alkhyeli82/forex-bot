@@ -3,19 +3,18 @@ import telebot
 from flask import Flask, request
 import openai
 
-# جلب التوكنات من Environment Variables في Render
+# جلب التوكنات من Render Environment Variables
 TOKEN = os.environ.get("8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg")  
 openai.api_key = os.environ.get("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")
 
+# تأكيد أن التوكنات موجودة
+if not TOKEN:
+    raise ValueError("❌ BOT_TOKEN غير موجود في Environment Variables")
+if not openai.api_key:
+    raise ValueError("❌ OPENAI_API_KEY غير موجود في Environment Variables")
+
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
-
-# قائمة الرموز المدعومة
-SUPPORTED_ASSETS = [
-    "EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD", "NZDUSD",
-    "XAUUSD", "Gold", "Silver", "Oil", "WTI", "Brent",
-    "Bitcoin", "BTCUSD", "Ethereum", "ETHUSD", "Nasdaq", "SP500"
-]
 
 # Webhook endpoint
 @app.route("/" + TOKEN, methods=["POST"])
@@ -28,18 +27,15 @@ def getMessage():
 # Route لفحص البوت
 @app.route("/")
 def webhook():
-    return "✅ البوت شغال مع Noro AI", 200
+    return "✅ البوت شغال", 200
 
 # أمر /start
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
-    help_text = (
-        "👋 أهلًا بك في *WhaleForex Bot*!\n\n"
-        "📊 ارسل اسم العملة أو السلعة لتحصل على تحليل من Noro AI.\n"
-        "✅ أمثلة: Gold, Bitcoin, EURUSD, Oil\n\n"
-        "⚡ الأصول المدعومة:\n" + ", ".join(SUPPORTED_ASSETS)
+    bot.reply_to(
+        message,
+        "👋 أهلًا! اكتب اسم العملة أو السلعة (مثال: EURUSD, Bitcoin, Gold) للحصول على تحليل."
     )
-    bot.reply_to(message, help_text, parse_mode="Markdown")
 
 # دالة استدعاء GPT (Noro AI style)
 def ask_noro_ai(prompt):
@@ -58,23 +54,11 @@ def ask_noro_ai(prompt):
 # استقبال أي رسالة من المستخدم
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    user_text = message.text.strip()
-
-    # التحقق من أن الأصل مدعوم
-    if user_text not in SUPPORTED_ASSETS:
-        bot.reply_to(
-            message,
-            f"⚠️ الأصل *{user_text}* غير مدعوم.\n\n✅ الأصول المتاحة:\n" + ", ".join(SUPPORTED_ASSETS),
-            parse_mode="Markdown"
-        )
-        return
-
-    # طلب التحليل من Noro AI
-    bot.reply_to(message, f"⏳ جاري تحليل *{user_text}*...\n", parse_mode="Markdown")
+    user_text = message.text
     analysis = ask_noro_ai(user_text)
-    bot.reply_to(message, f"💹 تحليل {user_text}:\n\n{analysis}")
+    bot.reply_to(message, analysis)
 
-# تشغيل السيرفر والويب هوك
+# تشغيل
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     bot.remove_webhook()
