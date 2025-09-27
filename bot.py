@@ -3,8 +3,8 @@ import telebot
 from flask import Flask, request
 import openai
 
-# يسحب التوكنات من Environment Variables
-TOKEN = os.environ.get("8477120330:AAGNqSX4Kb1wMhQcGqeNRyTZfqJhZw2Vbdg")  
+# يسحب القيم من Environment Variables في Render
+TOKEN = os.environ.get("BOT_TOKEN")
 openai.api_key = os.environ.get("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")
 
 bot = telebot.TeleBot(TOKEN)
@@ -26,7 +26,10 @@ def webhook():
 # أمر /start
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
-    bot.reply_to(message, "👋 أهلًا! ارسل اسم العملة أو السلعة (مثال: EURUSD, Bitcoin, Gold) لتحصل على تحليل.")
+    bot.reply_to(
+        message,
+        "👋 أهلًا! ارسل اسم العملة أو السلعة (مثال: EURUSD, Bitcoin, Gold) لتحصل على تحليل."
+    )
 
 # دالة استدعاء GPT (Noro AI style)
 def ask_noro_ai(prompt):
@@ -53,6 +56,6 @@ def echo_all(message):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     bot.remove_webhook()
-    bot.set_webhook(url="bot.set_webhook(url="https://forex-bot-31ws.onrender.com/" + TOKEN)
-" + TOKEN)
+   bot.set_webhook(url="https://forex-bot-31ws.onrender.com/" + TOKEN)
+
     app.run(host="0.0.0.0", port=port)
