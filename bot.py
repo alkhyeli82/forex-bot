@@ -75,7 +75,7 @@ def weekly(message):
     bot.reply_to(message, generate_weekly_report())
 
 # ---- جدولة التقرير الأسبوعي ----
-CHAT_ID = os.environ.get("CHAT_ID")  # حط هنا ID القناة أو المجموعة
+CHAT_ID = os.environ.get("CHAT_ID")  # ID القناة أو المجموعة
 
 def job():
     report = generate_weekly_report()
@@ -83,7 +83,6 @@ def job():
         bot.send_message(CHAT_ID, report)
 
 def run_scheduler():
-    # كل جمعة الساعة 23:59
     schedule.every().friday.at("23:59").do(job)
     while True:
         schedule.run_pending()
@@ -95,7 +94,7 @@ t.start()
 
 # ---- تشغيل السيرفر ----
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render يعطيك PORT جاهز
+    port = int(os.environ.get("PORT", 10000))  # مهم: Render يعطيك PORT جاهز
     bot.remove_webhook()
     bot.set_webhook(url=f"https://forex-bot-31ws.onrender.com/{TOKEN}")
     app.run(host="0.0.0.0", port=port)
